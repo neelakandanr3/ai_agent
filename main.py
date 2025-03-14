@@ -19,6 +19,9 @@ async def run_task(task: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+import subprocess
+import os
+
 def execute_task(task: str):
     if task.startswith("install uv and run datagen.py"):
         email = task.split(" ")[-1]
@@ -32,6 +35,16 @@ def execute_task(task: str):
                 raise ValueError("datagen.py script not found")
             # Run datagen.py script with the provided email
             result = subprocess.run(["python", "datagen.py", email], check=True, capture_output=True, text=True)
+            
+            # Create symbolic link to /data directory
+            source_path = "/data"
+            link_path = "/workspaces/ai_agent/data"
+            if not os.path.exists(link_path):
+                os.symlink(source_path, link_path)
+                print(f"Symbolic link created: {link_path} -> {source_path}")
+            else:
+                print(f"Symbolic link already exists: {link_path}")
+            
             return {"result": f"Data generation script executed successfully: {result.stdout}"}
         except subprocess.CalledProcessError as e:
             return {"error": f"Error executing task: {e.stderr}"}
